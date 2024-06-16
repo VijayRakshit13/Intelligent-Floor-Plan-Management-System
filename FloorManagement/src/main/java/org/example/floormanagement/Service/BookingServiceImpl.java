@@ -7,7 +7,6 @@ import org.example.floormanagement.Repository.RoomRepository;
 import org.example.floormanagement.Security.Entities.Role;
 import org.example.floormanagement.Security.UserRepository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -160,6 +159,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public Booking updateBooking(Long bookingId, Long roomNo, LocalDateTime startTime, LocalDateTime endTime) {
+        String currentUserEmail = getCurrentUserEmail();
+        
         Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
         if (!bookingOpt.isPresent()) {
             throw new IllegalArgumentException("Booking does not exist");
@@ -180,6 +181,11 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Booking booking = bookingOpt.get();
+        
+        if (!isAdmin(currentUserEmail) && !currentUserEmail.equals(booking.getBookedBy())) {
+            throw new IllegalArgumentException("You are not authorized to update this booking");
+        }
+        
         booking.setRoom(roomOpt.get());
         booking.setStartTime(startTime);
         booking.setEndTime(endTime);
