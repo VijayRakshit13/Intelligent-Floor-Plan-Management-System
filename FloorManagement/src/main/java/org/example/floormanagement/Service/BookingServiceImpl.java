@@ -4,7 +4,10 @@ import org.example.floormanagement.Entity.Booking;
 import org.example.floormanagement.Entity.Room;
 import org.example.floormanagement.Repository.BookingRepository;
 import org.example.floormanagement.Repository.RoomRepository;
+import org.example.floormanagement.Security.Entities.Role;
+import org.example.floormanagement.Security.UserRepository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Autowired
     private BookingRepository bookingRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private RoomRepository roomRepository;
@@ -72,7 +78,7 @@ public class BookingServiceImpl implements BookingService {
         if (startTime.isAfter(endTime) || startTime.isEqual(endTime)) {
             throw new IllegalArgumentException("Start time must be before end time");
         }
-
+        
         List<Room> allRooms = roomRepository.findAll();
         return allRooms.stream()
                 .filter(room -> room.getCapacity() >= capacity)
@@ -181,11 +187,26 @@ public class BookingServiceImpl implements BookingService {
         return bookingRepository.save(booking);
     }
 
-    @Override
     public void cancelBooking(Long bookingId) {
-        if (!bookingRepository.existsById(bookingId)) {
+
+        String currentUserEmail = getCurrentUserEmail();
+
+        Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
+        if (bookingOpt.isEmpty()) {
             throw new IllegalArgumentException("Booking does not exist");
         }
+        Booking booking = bookingOpt.get();
+
+        if (!isAdmin(currentUserEmail) && !currentUserEmail.equals(booking.getBookedBy())) {
+            throw new IllegalArgumentException("You are not authorized to cancel this booking");
+        }
+
         bookingRepository.deleteById(bookingId);
+    }
+
+    private boolean isAdmin(String userEmail) {
+        return userRepository.findByEmail(userEmail)
+                .map(user -> user.getRole() == Role.ADMIN)
+                .orElse(false);
     }
 }
