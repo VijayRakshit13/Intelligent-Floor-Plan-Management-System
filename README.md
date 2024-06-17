@@ -43,9 +43,10 @@ This project implements a Floor Management System that allows users to manage fl
 
 ## Setup Instructions
 
-1. **Clone the repository and run the spring boot application.**
-2. **Access the API at http://localhost:8080.**
-3. **Use Postman to interact with the API endpoints.**
+1. **Download the files and open in Intellij or any other IDE which supports the application.**
+2. **Create a MySQL database and update the database credentials in the application properties file.**
+3. **Run the application and access the API at http://localhost:8080.**
+4. **Use Postman to interact with the API endpoints.**
 
 
 ## List of API Endpoints:
